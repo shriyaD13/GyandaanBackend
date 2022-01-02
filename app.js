@@ -1,5 +1,7 @@
 const express = require('express');
 const app = express();
+const firebase = require("firebase/app");
+require("firebase/auth");
 // const path = require('path');
 const { urlencoded } = require('express');
 
@@ -15,8 +17,16 @@ initializeApp({
 const db = getFirestore();
 
 // Firebase Auth
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-const auth = getAuth();
+const firebaseConfig = {
+    apiKey: "AIzaSyA73VSwU-UKQVOFm2bEZO93iYEfjDhWuF8",
+  authDomain: "gyandaan-19f42.firebaseapp.com",
+  projectId: "gyandaan-19f42",
+  storageBucket: "gyandaan-19f42.appspot.com",
+  messagingSenderId: "246523796593",
+  appId: "1:246523796593:web:c0b0ace676e21f65cf8fd0"
+}
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
 
 const courses = {
     class9th: {
