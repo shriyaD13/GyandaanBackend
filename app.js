@@ -105,8 +105,11 @@ app.post('/signIn', async(req,res) => {
         const errorCode = error.code;
         const errorMessage = error.message;
         console.log(errorCode,errorMessage);
+        res.redirect(`/authSucc/${errorMessage}`);
+
     };
     // res.send(userCredential);
+
 })
 
 const port = process.env.PORT || 3000;
