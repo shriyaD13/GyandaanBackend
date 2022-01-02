@@ -1,7 +1,6 @@
 const express = require('express');
 const app = express();
 const firebase = require("firebase/app");
-require("firebase/auth");
 // const path = require('path');
 const { urlencoded } = require('express');
 
@@ -27,6 +26,8 @@ const firebaseConfig = {
 }
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
+const { getAuth, signInWithEmailAndPassword } =  require("firebase/auth");
+const auth = getAuth();
 
 const courses = {
     class9th: {
@@ -96,18 +97,21 @@ app.get('/authSucc/:id', (req,res)=>{
 app.post('/signIn', async(req,res) => {
     const {email, password} = req.body;
     console.log(email,password);
-    try{
-        const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
-    console.log(userCredential," --> Signin successful");
-    // res.redirect(`/authSucc/${email}`);
+    signInWithEmailAndPassword(auth, email, password)
+  .then((userCredential) => {
+    // Signed in 
+    const user = userCredential.user;
+    console.log(user," --> Signin successful");
     res.redirect('/');
-    } catch(error) {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        console.log(errorCode,errorMessage);
-        res.redirect(`/authSucc/${errorMessage}`);
+    // ...
+  })
+  .catch((error) => {
+    const errorCode = error.code;
+    const errorMessage = error.message;
+    console.log(errorCode,errorMessage);
+    res.redirect(`/authSucc/${errorMessage}`);
+  });
 
-    };
     // res.send(userCredential);
 
 })
