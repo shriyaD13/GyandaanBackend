@@ -89,6 +89,10 @@ app.post('/findMentor', async (req, res) => {
 
 })
 
+app.get('/authSucc/:id', (req,res)=>{
+    res.send(req.params.id);
+})
+
 app.post('/signIn', async(req,res) => {
     const {email, password} = req.body;
     console.log(email,password);
@@ -100,7 +104,7 @@ app.post('/signIn', async(req,res) => {
         const errorMessage = error.message;
         console.log(errorCode,errorMessage);
     };
-    res.redirect('/');
+    res.redirect(`/authSucc/${email}`);
     // res.send(userCredential);
 })
 
