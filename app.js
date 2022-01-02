@@ -5,6 +5,7 @@ const firebase = require("firebase/app");
 const { urlencoded } = require('express');
 
 app.use(urlencoded({ extended: true }));
+app.use(express.json());
 
 // Firebase Firestore
 const { initializeApp, applicationDefault, cert } = require('firebase-admin/app');
@@ -115,6 +116,7 @@ app.post('/signUp', async (req, res) => {
 
 
 app.post('/signIn', async (req, res) => {
+    console.log(req.body);
     const { email, password } = req.body;
     console.log(email, password);
     signInWithEmailAndPassword(auth, email, password)
