@@ -18,15 +18,15 @@ const db = getFirestore();
 // Firebase Auth
 const firebaseConfig = {
     apiKey: "AIzaSyA73VSwU-UKQVOFm2bEZO93iYEfjDhWuF8",
-  authDomain: "gyandaan-19f42.firebaseapp.com",
-  projectId: "gyandaan-19f42",
-  storageBucket: "gyandaan-19f42.appspot.com",
-  messagingSenderId: "246523796593",
-  appId: "1:246523796593:web:c0b0ace676e21f65cf8fd0"
+    authDomain: "gyandaan-19f42.firebaseapp.com",
+    projectId: "gyandaan-19f42",
+    storageBucket: "gyandaan-19f42.appspot.com",
+    messagingSenderId: "246523796593",
+    appId: "1:246523796593:web:c0b0ace676e21f65cf8fd0"
 }
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
-const { getAuth, signInWithEmailAndPassword } =  require("firebase/auth");
+const { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } = require("firebase/auth");
 const auth = getAuth();
 
 const courses = {
@@ -70,9 +70,9 @@ app.get('/students/:id', async (req, res) => {
     res.send(JSON.stringify(stdData.data()));
 })
 
-app.post('/addMentor/:id', async (req, res) => {
+// app.post('/addMentor/:id', async (req, res) => {
 
-})
+// })
 
 app.get('/mentors/:id', async (req, res) => {
     const { id } = req.params;
@@ -81,39 +81,59 @@ app.get('/mentors/:id', async (req, res) => {
     res.send(JSON.stringify(mentorData.data()));
 })
 
-app.post('/addMentee/:id', async (req, res) => {
+// app.post('/addMentee/:id', async (req, res) => {
 
+// })
+
+
+// app.post('/findMentor', async (req, res) => {
+
+// })
+
+
+app.post('/signUp', async (req, res) => {
+    const { email, password } = req.body;
+    console.log(email, password);
+    createUserWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+            // Signed in 
+            const user = userCredential.user;
+            console.log(user, " --> Signin successful");
+            // res.statusCode = 400;
+            res.send('SignUpSuccessFul');
+
+            // todo :: add user to database
+        })
+        .catch((error) => {
+            const errorCode = error.code;
+            const errorMessage = error.message;
+            console.log(errorCode, errorMessage);
+            res.send(errorMessage);
+            // res.redirect(`/authSucc/${errorMessage}`);
+        });
 })
 
 
-app.post('/findMentor', async (req, res) => {
-
-})
-
-app.get('/authSucc/:id', (req,res)=>{
-    res.send(req.params.id);
-})
-
-app.post('/signIn', async(req,res) => {
-    const {email, password} = req.body;
-    console.log(email,password);
+app.post('/signIn', async (req, res) => {
+    const { email, password } = req.body;
+    console.log(email, password);
     signInWithEmailAndPassword(auth, email, password)
-  .then((userCredential) => {
-    // Signed in 
-    const user = userCredential.user;
-    console.log(user," --> Signin successful");
-    res.redirect('/');
-    // ...
-  })
-  .catch((error) => {
-    const errorCode = error.code;
-    const errorMessage = error.message;
-    console.log(errorCode,errorMessage);
-    res.redirect(`/authSucc/${errorMessage}`);
-  });
+        .then((userCredential) => {
+            // Signed in 
+            const user = userCredential.user;
+            console.log(user, " --> Signin successful");
 
+            res.send('SignInSuccessFul');
+
+            // todo :: retrieve id of user and send it
+        })
+        .catch((error) => {
+            const errorCode = error.code;
+            const errorMessage = error.message;
+            console.log(errorCode, errorMessage);
+            res.send(errorMessage);
+        });
     // res.send(userCredential);
-
 })
 
 const port = process.env.PORT || 3000;
