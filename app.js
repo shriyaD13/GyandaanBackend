@@ -99,12 +99,13 @@ app.post('/signIn', async(req,res) => {
     try{
         const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
     console.log(userCredential," --> Signin successful");
+    // res.redirect(`/authSucc/${email}`);
+    res.redirect('/');
     } catch(error) {
         const errorCode = error.code;
         const errorMessage = error.message;
         console.log(errorCode,errorMessage);
     };
-    res.redirect(`/authSucc/${email}`);
     // res.send(userCredential);
 })
 
