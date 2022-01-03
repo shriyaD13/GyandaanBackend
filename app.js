@@ -30,19 +30,6 @@ firebase.initializeApp(firebaseConfig);
 const { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } = require("firebase/auth");
 const auth = getAuth();
 
-const courses = {
-    class9th: {
-        Math: ['Trignometry', 'circles'],
-        Science: ['Heriditary', 'Respiration'],
-        Sst: ['Climate', 'India Revoulation'],
-    },
-    class10th: {
-        Math: ['Surface Area', 'Triangles'],
-        Science: ['Electricity', 'Magnetism'],
-        Sst: ['Industries', 'Food Revoulation'],
-    }
-}
-
 app.get('/', async (req, res) => {
     res.send('Working....');
 })
@@ -92,18 +79,27 @@ app.get('/mentors/:id', async (req, res) => {
 // })
 
 
-app.post('/signUp', async (req, res) => {
+app.post('/signUp/:id', async (req, res) => {
     const { email, password } = req.body;
-    console.log(email, password);
+    const { id } = req.params;
+    console.log(email, password, id);
     createUserWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
             // Signed in 
             const user = userCredential.user;
             console.log(user, " --> Signin successful");
             // res.statusCode = 400;
-            res.send('SignUpSuccessFul');
+            const userData = {
+                userId: user.uid,
+                token: user.accessToken,
+                expirationTime: user.stsTokenManager.expirationTime,
+            }
+            res.send(JSON.stringify(userData));
 
             // todo :: add user to database
+            db.collection(id).doc(user.uid).set({
+                email: email,
+            }).then(() => console.log('Added user'));
         })
         .catch((error) => {
             const errorCode = error.code;
@@ -115,7 +111,7 @@ app.post('/signUp', async (req, res) => {
 })
 
 
-app.post('/signIn', async (req, res) => {
+app.post('/signIn/:id', async (req, res) => {
     console.log(req.body);
     const { email, password } = req.body;
     console.log(email, password);
@@ -123,9 +119,13 @@ app.post('/signIn', async (req, res) => {
         .then((userCredential) => {
             // Signed in 
             const user = userCredential.user;
-            console.log(user, " --> Signin successful");
-
-            res.send('SignInSuccessFul');
+            console.log(user.reloadUserInfo, " --> Signin successful");
+            const userData = {
+                userId: user.uid,
+                token: user.accessToken,
+                expirationTime: user.stsTokenManager.expirationTime,
+            }
+            res.send(JSON.stringify(userData));
 
             // todo :: retrieve id of user and send it
         })
