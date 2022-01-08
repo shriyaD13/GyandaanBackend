@@ -79,10 +79,9 @@ app.get('/mentors/:id', async (req, res) => {
 // })
 
 
-app.post('/signUp/:id', async (req, res) => {
-    const { email, password } = req.body;
-    const { id } = req.params;
-    console.log(email, password, id);
+app.post('/signUp', async (req, res) => {
+    const { email, password , type} = req.body;
+    console.log(email, password, type);
     createUserWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
             // Signed in 
@@ -97,8 +96,10 @@ app.post('/signUp/:id', async (req, res) => {
             res.send(JSON.stringify(userData));
 
             // todo :: add user to database
-            db.collection(id).doc(user.uid).set({
+            const docRef = (type == 'Learn') ? db.collection('students') : db.collection('mentors');
+            docRef.doc(user.uid).set({
                 email: email,
+                type: type,
             }).then(() => console.log('Added user'));
         })
         .catch((error) => {
@@ -111,7 +112,7 @@ app.post('/signUp/:id', async (req, res) => {
 })
 
 
-app.post('/signIn/:id', async (req, res) => {
+app.post('/signIn', async (req, res) => {
     console.log(req.body);
     const { email, password } = req.body;
     console.log(email, password);
