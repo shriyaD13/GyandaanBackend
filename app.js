@@ -50,24 +50,24 @@ app.get('/courses', async (req, res) => {
 
 })
 
-app.get('/students/:id', async (req, res) => {
-    const { id } = req.params;
-    console.log(id);
-    const stdData = await db.collection('students').doc(id).get();
-    // await  db.collection('students').doc(id).update({mentor: 'Rock'});
-    res.send(JSON.stringify(stdData.data()));
-})
-
-// app.post('/addMentor/:id', async (req, res) => {
-
+// app.get('/students/:id', async (req, res) => {
+//     const { id } = req.params;
+//     console.log(id);
+//     const stdData = await db.collection('students').doc(id).get();
+//     // await  db.collection('students').doc(id).update({mentor: 'Rock'});
+//     res.send(JSON.stringify(stdData.data()));
 // })
 
-app.get('/mentors/:id', async (req, res) => {
-    const { id } = req.params;
-    console.log(id);
-    const mentorData = await db.collection('mentors').doc(id).get();
-    res.send(JSON.stringify(mentorData.data()));
-})
+// // app.post('/addMentor/:id', async (req, res) => {
+
+// // })
+
+// app.get('/mentors/:id', async (req, res) => {
+//     const { id } = req.params;
+//     console.log(id);
+//     const mentorData = await db.collection('mentors').doc(id).get();
+//     res.send(JSON.stringify(mentorData.data()));
+// })
 
 // app.post('/addMentee/:id', async (req, res) => {
 
@@ -80,7 +80,7 @@ app.get('/mentors/:id', async (req, res) => {
 
 
 app.post('/signUp', async (req, res) => {
-    const { username, email, password , type} = req.body;
+    const { username, email, password, type } = req.body;
     console.log(username, email, password, type);
     createUserWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
@@ -101,6 +101,8 @@ app.post('/signUp', async (req, res) => {
                 username: username,
                 email: email,
                 type: type,
+                mentors: [],
+                upcomingClasses: [],
             }).then(() => console.log('Added user'));
         })
         .catch((error) => {
@@ -141,12 +143,12 @@ app.post('/signIn', async (req, res) => {
 })
 
 // Fetching user details
-app.get('/getUserInfo/:id', async (req,res)=>{
-    const {id}  = req.params;
+app.get('/getUserInfo/:id', async (req, res) => {
+    const { id } = req.params;
     const userData = {};
     var docRef = await db.collection('students').doc(id).get();
     // console.log('1',docRef.data());
-    if(!docRef.data()) docRef = await db.collection('mentors').doc(id).get();
+    if (!docRef.data()) docRef = await db.collection('mentors').doc(id).get();
     // console.log(docRef.data());
     res.send(JSON.stringify(docRef.data()));
 })
