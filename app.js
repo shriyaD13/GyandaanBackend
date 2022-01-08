@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const firebase = require("firebase/app");
 // const path = require('path');
-const { urlencoded } = require('express');
+const { urlencoded, json } = require('express');
 
 app.use(urlencoded({ extended: true }));
 app.use(express.json());
@@ -80,8 +80,8 @@ app.get('/mentors/:id', async (req, res) => {
 
 
 app.post('/signUp', async (req, res) => {
-    const { email, password , type} = req.body;
-    console.log(email, password, type);
+    const { username, email, password , type} = req.body;
+    console.log(username, email, password, type);
     createUserWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
             // Signed in 
@@ -98,6 +98,7 @@ app.post('/signUp', async (req, res) => {
             // todo :: add user to database
             const docRef = (type == 'Learn') ? db.collection('students') : db.collection('mentors');
             docRef.doc(user.uid).set({
+                username: username,
                 email: email,
                 type: type,
             }).then(() => console.log('Added user'));
@@ -137,6 +138,17 @@ app.post('/signIn', async (req, res) => {
             res.send(errorMessage);
         });
     // res.send(userCredential);
+})
+
+// Fetching user details
+app.get('/getUserInfo/:id', async (req,res)=>{
+    const {id}  = req.params;
+    const userData = {};
+    var docRef = await db.collection('students').doc(id).get();
+    // console.log('1',docRef.data());
+    if(!docRef.data()) docRef = await db.collection('mentors').doc(id).get();
+    // console.log(docRef.data());
+    res.send(JSON.stringify(docRef.data()));
 })
 
 const port = process.env.PORT || 3000;
