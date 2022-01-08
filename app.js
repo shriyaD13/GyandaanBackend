@@ -102,6 +102,7 @@ app.post('/signUp', async (req, res) => {
                 email: email,
                 type: type,
                 mentors: [],
+                students: [],
                 upcomingClasses: [],
             }).then(() => console.log('Added user'));
         })
