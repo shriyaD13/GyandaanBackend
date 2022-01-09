@@ -58,9 +58,20 @@ app.get('/courses', async (req, res) => {
 //     res.send(JSON.stringify(stdData.data()));
 // })
 
-// // app.post('/addMentor/:id', async (req, res) => {
+app.post('/addMentor/:id', async (req, res) => {
+    const { id } = req.params;
+    const { mentorId } = req.body;
+    console.log(mentorId, id);
 
-// // })
+    var mentorList = [];
+    const studDataRef = db.collection('students').doc(id);
+    const studData = await studDataRef.get();
+    console.log(studData.data());
+    mentorList = studData.data().mentors;
+    mentorList.push(mentorId);
+    await studDataRef.update({ mentors: mentorList });
+    res.send("Done");
+})
 
 // app.get('/mentors/:id', async (req, res) => {
 //     const { id } = req.params;
@@ -86,7 +97,7 @@ app.post('/signUp', async (req, res) => {
         .then((userCredential) => {
             // Signed in 
             const user = userCredential.user;
-            console.log(user, " --> Signin successful");
+            console.log(user, " --> SignUp successful");
             // res.statusCode = 400;
             const userData = {
                 userId: user.uid,
@@ -96,15 +107,27 @@ app.post('/signUp', async (req, res) => {
             res.send(JSON.stringify(userData));
 
             // todo :: add user to database
-            const docRef = (type == 'Learn') ? db.collection('students') : db.collection('mentors');
-            docRef.doc(user.uid).set({
-                username: username,
-                email: email,
-                type: type,
-                mentors: [],
-                students: [],
-                upcomingClasses: [],
-            }).then(() => console.log('Added user'));
+            if (type == 'Learn') {
+                db.collection('students').doc(user.uid).set({
+                    username: username,
+                    email: email,
+                    type: type,
+                    upcomingClasses: [],
+                    nentors: [],
+                }).then(() => {
+                    console.log('Added user');
+                })
+            } else if (type == 'Teach') {
+                db.collection('mentors').doc(user.uid).set({
+                    username: username,
+                    email: email,
+                    type: type,
+                    upcomingClasses: [],
+                    students: [],
+                }).then(() => {
+                    console.log('Added user')
+                })
+            }
         })
         .catch((error) => {
             const errorCode = error.code;
@@ -153,6 +176,8 @@ app.get('/getUserInfo/:id', async (req, res) => {
     // console.log(docRef.data());
     res.send(JSON.stringify(docRef.data()));
 })
+
+
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
