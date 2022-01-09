@@ -179,6 +179,23 @@ app.get('/getUserInfo/:id', async (req, res) => {
     res.send(JSON.stringify(docRef.data()));
 })
 
+app.post('/addCourseAndTime/:id', async (req, res) => {
+    const { id } = req.params;
+    const { course, timing } = req.body;
+    try {
+        await db.collection('mentors').doc(id).update({
+            course: course,
+            timing: timing,
+        })
+        console.log("updated");
+        res.send('updated');
+    } catch (err) {
+        console.log(err);
+        res.send(err);
+    }
+
+})
+
 
 
 const port = process.env.PORT || 3000;
