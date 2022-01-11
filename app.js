@@ -50,14 +50,6 @@ app.get('/courses', async (req, res) => {
 
 })
 
-// app.get('/students/:id', async (req, res) => {
-//     const { id } = req.params;
-//     console.log(id);
-//     const stdData = await db.collection('students').doc(id).get();
-//     // await  db.collection('students').doc(id).update({mentor: 'Rock'});
-//     res.send(JSON.stringify(stdData.data()));
-// })
-
 app.post('/addMentor/:id', async (req, res) => {
     const { id } = req.params;
     const { mentorId } = req.body;
@@ -73,31 +65,73 @@ app.post('/addMentor/:id', async (req, res) => {
     res.send("Done");
 })
 
-// app.get('/mentors/:id', async (req, res) => {
-//     const { id } = req.params;
-//     console.log(id);
-//     const mentorData = await db.collection('mentors').doc(id).get();
-//     res.send(JSON.stringify(mentorData.data()));
-// })
-
 // app.post('/addMentee/:id', async (req, res) => {
 
 // })
+const updateDataBase = async (keyword, id, studId, mentorId, course, time) => {
+    var upcomingClassesNew = [];
+    const docRef = db.collection(keyword).doc(id);
+    const docData = await docRef.get();
+    // console.log(docData.data());
+    upcomingClassesNew = docData.data().upcomingClasses;
+    upcomingClassesNew.push({
+        student: studId,
+        mentor: mentorId,
+        subject: course,
+        time: time,
+    })
 
+    if (keyword == 'students') {
+        var newMentors = [];
+        newMentors = docData.data().mentors;
+        newMentors.push(mentorId);
+        await docRef.update({
+            upcomingClasses: upcomingClassesNew,
+            mentors: newMentors,
+        });
+    } else {
+        var newstudents = [];
+        newstudents = docData.data().students;
+        newstudents.push(studId);
+        await docRef.update({
+            upcomingClasses: upcomingClassesNew,
+            students: newstudents,
+        });
+    }
+}
 
-// app.post('/findMentor', async (req, res) => {
+app.post('/scheduleClass/:studId', async (req, res) => {
+    const { studId } = req.params;
+    const { chosenCourse, chosenTiming, chosenTimeSlot } = req.body;
+    // console.log(chosenCourse, chosenTiming, chosenTimeSlot);
 
-// })
+    // find Mentor 
+    const matchingMentors = await db.collection('mentors')
+        .where('course', '==', chosenCourse)
+        .where('timing', '==', chosenTimeSlot)
+        .get();
+        var  assignedMentorId;
+    matchingMentors.forEach((mentor) => {
+        assignedMentorId = mentor.id;
+    });
+    // console.log(assignedMentorId);
+
+    // add upcoming class, studId, mentorID to databse
+    await updateDataBase('students', studId, studId, assignedMentorId, chosenCourse, chosenTiming);
+    await updateDataBase('mentors', assignedMentorId, studId, assignedMentorId, chosenCourse, chosenTiming);
+
+    res.send('Done!');
+})
 
 
 app.post('/signUp', async (req, res) => {
     const { username, email, password, type } = req.body;
-    console.log(username, email, password, type);
+    // console.log(username, email, password, type);
     createUserWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
             // Signed in 
             const user = userCredential.user;
-            console.log(user, " --> SignUp successful");
+            // console.log(user, " --> SignUp successful");
             // res.statusCode = 400;
             const userData = {
                 userId: user.uid,
@@ -113,9 +147,9 @@ app.post('/signUp', async (req, res) => {
                     email: email,
                     type: type,
                     upcomingClasses: [],
-                    nentors: [],
+                    mentors: [],
                 }).then(() => {
-                    console.log('Added user');
+                    // console.log('Added user');
                 })
             } else if (type == 'Teach') {
                 db.collection('mentors').doc(user.uid).set({
@@ -127,14 +161,14 @@ app.post('/signUp', async (req, res) => {
                     course: '',
                     timing: '',
                 }).then(() => {
-                    console.log('Added user')
+                    // console.log('Added user')
                 })
             }
         })
         .catch((error) => {
             const errorCode = error.code;
             const errorMessage = error.message;
-            console.log(errorCode, errorMessage);
+            // console.log(errorCode, errorMessage);
             res.send(errorMessage);
             // res.redirect(`/authSucc/${errorMessage}`);
         });
@@ -142,14 +176,14 @@ app.post('/signUp', async (req, res) => {
 
 
 app.post('/signIn', async (req, res) => {
-    console.log(req.body);
+    // console.log(req.body);
     const { email, password } = req.body;
-    console.log(email, password);
+    // console.log(email, password);
     signInWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
             // Signed in 
             const user = userCredential.user;
-            console.log(user.reloadUserInfo, " --> Signin successful");
+            // console.log(user.reloadUserInfo, " --> Signin successful");
             const userData = {
                 userId: user.uid,
                 token: user.accessToken,
@@ -162,7 +196,7 @@ app.post('/signIn', async (req, res) => {
         .catch((error) => {
             const errorCode = error.code;
             const errorMessage = error.message;
-            console.log(errorCode, errorMessage);
+            // console.log(errorCode, errorMessage);
             res.send(errorMessage);
         });
     // res.send(userCredential);
@@ -187,7 +221,7 @@ app.post('/addCourseAndTime/:id', async (req, res) => {
             course: course,
             timing: timing,
         })
-        console.log("updated");
+        // console.log("updated");
         res.send('updated');
     } catch (err) {
         console.log(err);
