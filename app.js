@@ -68,7 +68,7 @@ app.post('/addMentor/:id', async (req, res) => {
 // app.post('/addMentee/:id', async (req, res) => {
 
 // })
-const updateDataBase = async (keyword, id, studId, mentorId, course, time) => {
+const updateDataBase = async (keyword, id, studId, mentorId, course, time,days) => {
     var upcomingClassesNew = [];
     const docRef = db.collection(keyword).doc(id);
     const docData = await docRef.get();
@@ -79,6 +79,7 @@ const updateDataBase = async (keyword, id, studId, mentorId, course, time) => {
         mentor: mentorId,
         subject: course,
         time: time,
+        days: days,
     })
 
     if (keyword == 'students') {
@@ -102,12 +103,13 @@ const updateDataBase = async (keyword, id, studId, mentorId, course, time) => {
 
 app.post('/scheduleClass/:studId', async (req, res) => {
     const { studId } = req.params;
-    const { chosenCourse, chosenTiming, chosenTimeSlot } = req.body;
-    // console.log(chosenCourse, chosenTiming, chosenTimeSlot);
-
+    const { chosenCourse, chosenTiming, chosenTimeSlot , chosenDays} = req.body;
+    console.log(chosenCourse, chosenTiming, chosenTimeSlot,chosenDays);
+    console.log(typeof(chosenDays));
     // find Mentor 
     const matchingMentors = await db.collection('mentors')
         .where('course', '==', chosenCourse)
+        .where('days', 'array-contains-any' , chosenDays)
         .where('timing', '==', chosenTimeSlot)
         .get();
         var  assignedMentorId;
@@ -158,6 +160,7 @@ app.post('/signUp', async (req, res) => {
                     type: type,
                     upcomingClasses: [],
                     students: [],
+                    days: [],
                     course: '',
                     timing: '',
                 }).then(() => {
@@ -215,11 +218,12 @@ app.get('/getUserInfo/:id', async (req, res) => {
 
 app.post('/addCourseAndTime/:id', async (req, res) => {
     const { id } = req.params;
-    const { course, timing } = req.body;
+    const { course, timing , days} = req.body;
     try {
         await db.collection('mentors').doc(id).update({
             course: course,
             timing: timing,
+            days: days
         })
         // console.log("updated");
         res.send('updated');
