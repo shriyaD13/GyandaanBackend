@@ -50,53 +50,28 @@ app.get('/courses', async (req, res) => {
 
 })
 
-app.post('/addMentor/:id', async (req, res) => {
-    const { id } = req.params;
-    const { mentorId } = req.body;
-    console.log(mentorId, id);
-
-    var mentorList = [];
-    const studDataRef = db.collection('students').doc(id);
-    const studData = await studDataRef.get();
-    console.log(studData.data());
-    mentorList = studData.data().mentors;
-    mentorList.push(mentorId);
-    await studDataRef.update({ mentors: mentorList });
-    res.send("Done");
-})
-
-// app.post('/addMentee/:id', async (req, res) => {
-
-// })
 const updateDataBase = async (keyword, id, studId, mentorId, course, time,days) => {
-    var upcomingClassesNew = [];
     const docRef = db.collection(keyword).doc(id);
     const docData = await docRef.get();
     // console.log(docData.data());
-    upcomingClassesNew = docData.data().upcomingClasses;
-    upcomingClassesNew.push({
-        student: studId,
-        mentor: mentorId,
-        subject: course,
-        time: time,
-        days: days,
-    })
+    
+    await docRef.update({
+        upcomingClasses: FieldValue.arrayUnion({
+            student: studId,
+            mentor: mentorId,
+            subject: course,
+            time: time,
+            days: days,
+        })
+    });
 
     if (keyword == 'students') {
-        var newMentors = [];
-        newMentors = docData.data().mentors;
-        newMentors.push(mentorId);
         await docRef.update({
-            upcomingClasses: upcomingClassesNew,
-            mentors: newMentors,
-        });
+            mentor: FieldValue.arrayUnion(mentorId)
+        })
     } else {
-        var newstudents = [];
-        newstudents = docData.data().students;
-        newstudents.push(studId);
         await docRef.update({
-            upcomingClasses: upcomingClassesNew,
-            students: newstudents,
+            students: FieldValue.arrayUnion(studId),
         });
     }
 }
@@ -104,8 +79,8 @@ const updateDataBase = async (keyword, id, studId, mentorId, course, time,days) 
 app.post('/scheduleClass/:studId', async (req, res) => {
     const { studId } = req.params;
     const { chosenCourse, chosenTiming, chosenTimeSlot , chosenDays} = req.body;
-    console.log(chosenCourse, chosenTiming, chosenTimeSlot,chosenDays);
-    console.log(typeof(chosenDays));
+    // console.log(chosenCourse, chosenTiming, chosenTimeSlot,chosenDays);
+    // console.log(typeof(chosenDays));
     // find Mentor 
     const matchingMentors = await db.collection('mentors')
         .where('course', '==', chosenCourse)
@@ -119,8 +94,8 @@ app.post('/scheduleClass/:studId', async (req, res) => {
     // console.log(assignedMentorId);
 
     // add upcoming class, studId, mentorID to databse
-    await updateDataBase('students', studId, studId, assignedMentorId, chosenCourse, chosenTiming);
-    await updateDataBase('mentors', assignedMentorId, studId, assignedMentorId, chosenCourse, chosenTiming);
+    await updateDataBase('students', studId, studId, assignedMentorId, chosenCourse, chosenTiming,chosenDays);
+    await updateDataBase('mentors', assignedMentorId, studId, assignedMentorId, chosenCourse, chosenTiming,chosenDays);
 
     res.send('Done!');
 })
@@ -194,7 +169,6 @@ app.post('/signIn', async (req, res) => {
             }
             res.send(JSON.stringify(userData));
 
-            // todo :: retrieve id of user and send it
         })
         .catch((error) => {
             const errorCode = error.code;
