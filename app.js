@@ -59,7 +59,7 @@ const updateDataBase = async (keyword, id, studId, mentorId, course, time,days) 
         upcomingClasses: FieldValue.arrayUnion({
             student: studId,
             mentor: mentorId,
-            subject: course,
+            course: course,
             time: time,
             days: days,
         })
