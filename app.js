@@ -168,6 +168,16 @@ app.get('/mentorInfo/:mentorId', async (req, res) => {
     }
 })
 
+app.get('/studentInfo/:studId', async (req, res) => {
+    const { studId } = req.params;
+    try {
+        const docRef = await db.collection('students').doc(studId).get();
+        res.send(JSON.stringify(docRef.data()));
+    } catch (err) {
+        res.send(err.message);
+    }
+})
+
 // Fetching user details
 app.get('/getUserInfo/:id', async (req, res) => {
     const { id } = req.params;
