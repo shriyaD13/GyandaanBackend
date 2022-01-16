@@ -168,6 +168,18 @@ app.get('/mentorInfo/:mentorId', async (req, res) => {
     }
 })
 
+// Fetching user details
+app.get('/getUserInfo/:id', async (req, res) => {
+    const { id } = req.params;
+    const userData = {};
+    var docRef = await db.collection('students').doc(id).get();
+    // console.log('1',docRef.data());
+    if (!docRef.data()) docRef = await db.collection('mentors').doc(id).get();
+    // console.log(docRef.data());
+    res.send(JSON.stringify(docRef.data()));
+})
+
+
 
 app.post('/signUp', async (req, res) => {
     const { username, email, password, type } = req.body;
