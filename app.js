@@ -139,7 +139,7 @@ app.post('/findMentor/:studId', async (req, res) => {
         console.log(assignedMentorId);
 
         await db.collection('students').doc(studId).update({
-            mentor: FieldValue.arrayUnion(assignedMentorId)
+            mentors: FieldValue.arrayUnion(assignedMentorId)
         });
 
         await db.collection('mentors').doc(assignedMentorId).update({
@@ -185,7 +185,7 @@ app.get('/getUserInfo/:id', async (req, res) => {
     var docRef = await db.collection('students').doc(id).get();
     // console.log('1',docRef.data());
     if (!docRef.data()) docRef = await db.collection('mentors').doc(id).get();
-    // console.log(docRef.data());
+    // console.log(docRef.data());s
     res.send(JSON.stringify(docRef.data()));
 })
 
