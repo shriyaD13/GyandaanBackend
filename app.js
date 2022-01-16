@@ -50,74 +50,122 @@ app.get('/courses', async (req, res) => {
 
 })
 
-const updateDataBase = async (keyword, id, studId, mentorId, course, time, days) => {
-    const docRef = db.collection(keyword).doc(id);
-    const docData = await docRef.get();
-    // console.log(docData.data());
+// const updateDataBase = async (keyword, id, studId, mentorId, course, time, days) => {
+//     const docRef = db.collection(keyword).doc(id);
+//     const docData = await docRef.get();
+//     // console.log(docData.data());
 
 
 
-    if (keyword == 'students') {
-        const studName = docData.data().username;
-        const mentorData = await db.collection('mentors').doc(mentorId).get();
-        const mentorName = mentorData.data().username;
-        console.log(studName, mentorName);
-        await docRef.update({
-            upcomingClasses: FieldValue.arrayUnion({
-                student: { id: studId, username: studName },
-                mentor: { id: mentorId, username: mentorName },
-                course: course,
-                time: time,
-                days: days,
-            })
-        });
+//     if (keyword == 'students') {
+//         const studName = docData.data().username;
+//         const mentorData = await db.collection('mentors').doc(mentorId).get();
+//         const mentorName = mentorData.data().username;
+//         console.log(studName, mentorName);
+//         await docRef.update({
+//             upcomingClasses: FieldValue.arrayUnion({
+//                 student: { id: studId, username: studName },
+//                 mentor: { id: mentorId, username: mentorName },
+//                 course: course,
+//                 time: time,
+//                 days: days,
+//             })
+//         });
 
-        await docRef.update({
-            mentor: FieldValue.arrayUnion(mentorId)
-        })
-    } else {
-        const mentorName = docData.data().username;
-        const studData = await db.collection('students').doc(studId).get();
-        const studName = studData.data().username;
-        console.log(studName, mentorName);
-        await docRef.update({
-            upcomingClasses: FieldValue.arrayUnion({
-                student: { id: studId, username: studName },
-                mentor: { id: mentorId, username: mentorName },
-                course: course,
-                time: time,
-                days: days,
-            })
-        });
+//         await docRef.update({
+//             mentor: FieldValue.arrayUnion(mentorId)
+//         })
+//     } else {
+//         const mentorName = docData.data().username;
+//         const studData = await db.collection('students').doc(studId).get();
+//         const studName = studData.data().username;
+//         console.log(studName, mentorName);
+//         await docRef.update({
+//             upcomingClasses: FieldValue.arrayUnion({
+//                 student: { id: studId, username: studName },
+//                 mentor: { id: mentorId, username: mentorName },
+//                 course: course,
+//                 time: time,
+//                 days: days,
+//             })
+//         });
 
-        await docRef.update({
-            students: FieldValue.arrayUnion(studId),
-        });
-    }
-}
+//         await docRef.update({
+//             students: FieldValue.arrayUnion(studId),
+//         });
+//     }
+// }
 
-app.post('/scheduleClass/:studId', async (req, res) => {
+// app.post('/scheduleClass/:studId', async (req, res) => {
+//     const { studId } = req.params;
+//     const { chosenCourse, chosenTiming, chosenTimeSlot, chosenDays } = req.body;
+//     // console.log(chosenCourse, chosenTiming, chosenTimeSlot,chosenDays);
+//     // console.log(typeof(chosenDays));
+//     // find Mentor 
+//     const matchingMentors = await db.collection('mentors')
+//         .where('course', '==', chosenCourse)
+//         .where('days', 'array-contains-any', chosenDays)
+//         .where('timing', '==', chosenTimeSlot)
+//         .get();
+//     var assignedMentorId;
+//     matchingMentors.forEach((mentor) => {
+//         assignedMentorId = mentor.id;
+//     });
+//     // console.log(assignedMentorId);
+
+//     // add upcoming class, studId, mentorID to databse
+//     await updateDataBase('students', studId, studId, assignedMentorId, chosenCourse, chosenTiming, chosenDays);
+//     await updateDataBase('mentors', assignedMentorId, studId, assignedMentorId, chosenCourse, chosenTiming, chosenDays);
+
+//     res.send('Done!');
+// })
+
+app.post('/findMentor/:studId', async (req, res) => {
     const { studId } = req.params;
     const { chosenCourse, chosenTiming, chosenTimeSlot, chosenDays } = req.body;
     // console.log(chosenCourse, chosenTiming, chosenTimeSlot,chosenDays);
     // console.log(typeof(chosenDays));
     // find Mentor 
-    const matchingMentors = await db.collection('mentors')
-        .where('course', '==', chosenCourse)
-        .where('days', 'array-contains-any', chosenDays)
-        .where('timing', '==', chosenTimeSlot)
-        .get();
-    var assignedMentorId;
-    matchingMentors.forEach((mentor) => {
-        assignedMentorId = mentor.id;
-    });
-    // console.log(assignedMentorId);
+    try {
+        const matchingMentors = await db.collection('mentors')
+            .where('course', '==', chosenCourse)
+            .where('days', 'array-contains-any', chosenDays)
+            .where('timing', '==', chosenTimeSlot)
+            .get();
+        var assignedMentorId;
+        matchingMentors.forEach((mentor) => {
+            assignedMentorId = mentor.id;
+        });
+        console.log(assignedMentorId);
 
-    // add upcoming class, studId, mentorID to databse
-    await updateDataBase('students', studId, studId, assignedMentorId, chosenCourse, chosenTiming, chosenDays);
-    await updateDataBase('mentors', assignedMentorId, studId, assignedMentorId, chosenCourse, chosenTiming, chosenDays);
+        await db.collection('students').doc(studId).update({
+            mentor: FieldValue.arrayUnion(assignedMentorId)
+        });
 
-    res.send('Done!');
+        await db.collection('mentors').doc(assignedMentorId).update({
+            students: FieldValue.arrayUnion({
+                studId: studId,
+                chosenCourse: chosenCourse,
+                chosenTiming: chosenTiming,
+                chosenTimeSlot: chosenTimeSlot,
+                chosenDays: chosenDays,
+            })
+        })
+        res.send('Done!');
+    } catch (err) {
+        console.log(err.code, err.message);
+        res.send(err.message);
+    }
+})
+
+app.get('/mentorInfo/:mentorId', async (req, res) => {
+    const { mentorId } = req.params;
+    try {
+        const docRef = await db.collection('mentors').doc(mentorId).get();
+        res.send(JSON.stringify(docRef.data()));
+    } catch (err) {
+        res.send(err.message);
+    }
 })
 
 
@@ -197,17 +245,6 @@ app.post('/signIn', async (req, res) => {
             res.send(errorMessage);
         });
     // res.send(userCredential);
-})
-
-// Fetching user details
-app.get('/getUserInfo/:id', async (req, res) => {
-    const { id } = req.params;
-    const userData = {};
-    var docRef = await db.collection('students').doc(id).get();
-    // console.log('1',docRef.data());
-    if (!docRef.data()) docRef = await db.collection('mentors').doc(id).get();
-    // console.log(docRef.data());
-    res.send(JSON.stringify(docRef.data()));
 })
 
 app.post('/addCourseAndTime/:id', async (req, res) => {
