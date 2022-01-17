@@ -189,6 +189,36 @@ app.get('/getUserInfo/:id', async (req, res) => {
     res.send(JSON.stringify(docRef.data()));
 })
 
+app.post('/scheduleClass/:mentorId', async(req, res) => {
+    const {mentorId} = req.params;
+    const {studId, dateOfMeet, timeOfMeet, meetLink, course} = req.body;
+    try{
+        await db.collection('mentors').doc(mentorId).update({
+            upcomingClasses: FieldValue.arrayUnion({
+                studId: studId,
+                date: dateOfMeet,
+                time: timeOfMeet,
+                course: course,
+                link: meetLink,
+            })
+        });
+        await db.collection('students').doc(studId).update({
+            upcomingClasses: FieldValue.arrayUnion({
+                mentorId: mentorId,
+                date: dateOfMeet,
+                time: timeOfMeet,
+                course: course,
+                link: meetLink,
+            })
+        });
+        res.send('Done');
+    } catch (err) {
+        console.log(err.message);
+        res.send(err.message);
+    }
+    
+})
+
 
 
 app.post('/signUp', async (req, res) => {
@@ -286,8 +316,6 @@ app.post('/addCourseAndTime/:id', async (req, res) => {
     }
 
 })
-
-
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
