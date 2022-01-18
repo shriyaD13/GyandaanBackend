@@ -28,6 +28,7 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } = require("firebase/auth");
+const { async } = require('@firebase/util');
 const auth = getAuth();
 
 app.get('/', async (req, res) => {
@@ -49,76 +50,6 @@ app.get('/courses', async (req, res) => {
 
 
 })
-
-// const updateDataBase = async (keyword, id, studId, mentorId, course, time, days) => {
-//     const docRef = db.collection(keyword).doc(id);
-//     const docData = await docRef.get();
-//     // console.log(docData.data());
-
-
-
-//     if (keyword == 'students') {
-//         const studName = docData.data().username;
-//         const mentorData = await db.collection('mentors').doc(mentorId).get();
-//         const mentorName = mentorData.data().username;
-//         console.log(studName, mentorName);
-//         await docRef.update({
-//             upcomingClasses: FieldValue.arrayUnion({
-//                 student: { id: studId, username: studName },
-//                 mentor: { id: mentorId, username: mentorName },
-//                 course: course,
-//                 time: time,
-//                 days: days,
-//             })
-//         });
-
-//         await docRef.update({
-//             mentor: FieldValue.arrayUnion(mentorId)
-//         })
-//     } else {
-//         const mentorName = docData.data().username;
-//         const studData = await db.collection('students').doc(studId).get();
-//         const studName = studData.data().username;
-//         console.log(studName, mentorName);
-//         await docRef.update({
-//             upcomingClasses: FieldValue.arrayUnion({
-//                 student: { id: studId, username: studName },
-//                 mentor: { id: mentorId, username: mentorName },
-//                 course: course,
-//                 time: time,
-//                 days: days,
-//             })
-//         });
-
-//         await docRef.update({
-//             students: FieldValue.arrayUnion(studId),
-//         });
-//     }
-// }
-
-// app.post('/scheduleClass/:studId', async (req, res) => {
-//     const { studId } = req.params;
-//     const { chosenCourse, chosenTiming, chosenTimeSlot, chosenDays } = req.body;
-//     // console.log(chosenCourse, chosenTiming, chosenTimeSlot,chosenDays);
-//     // console.log(typeof(chosenDays));
-//     // find Mentor 
-//     const matchingMentors = await db.collection('mentors')
-//         .where('course', '==', chosenCourse)
-//         .where('days', 'array-contains-any', chosenDays)
-//         .where('timing', '==', chosenTimeSlot)
-//         .get();
-//     var assignedMentorId;
-//     matchingMentors.forEach((mentor) => {
-//         assignedMentorId = mentor.id;
-//     });
-//     // console.log(assignedMentorId);
-
-//     // add upcoming class, studId, mentorID to databse
-//     await updateDataBase('students', studId, studId, assignedMentorId, chosenCourse, chosenTiming, chosenDays);
-//     await updateDataBase('mentors', assignedMentorId, studId, assignedMentorId, chosenCourse, chosenTiming, chosenDays);
-
-//     res.send('Done!');
-// })
 
 app.post('/findMentor/:studId', async (req, res) => {
     const { studId } = req.params;
@@ -189,10 +120,10 @@ app.get('/getUserInfo/:id', async (req, res) => {
     res.send(JSON.stringify(docRef.data()));
 })
 
-app.post('/scheduleClass/:mentorId', async(req, res) => {
-    const {mentorId} = req.params;
-    const {studId, dateOfMeet, timeOfMeet, meetLink, course} = req.body;
-    try{
+app.post('/scheduleClass/:mentorId', async (req, res) => {
+    const { mentorId } = req.params;
+    const { studId, dateOfMeet, timeOfMeet, meetLink, course } = req.body;
+    try {
         await db.collection('mentors').doc(mentorId).update({
             upcomingClasses: FieldValue.arrayUnion({
                 studId: studId,
@@ -216,10 +147,8 @@ app.post('/scheduleClass/:mentorId', async(req, res) => {
         console.log(err.message);
         res.send(err.message);
     }
-    
+
 })
-
-
 
 app.post('/signUp', async (req, res) => {
     const { username, email, password, type } = req.body;
@@ -315,6 +244,38 @@ app.post('/addCourseAndTime/:id', async (req, res) => {
         res.send(err);
     }
 
+})
+
+app.get('/updateUpcomingClassesList/:id', async (req, res) => {
+    const { id } = req.params;
+    const type = req.query.type;
+    console.log(type);
+    try {
+        const docRef = await db.collection(type).doc(id).get();
+        const prevClasses = docRef.data().upcomingClasses;
+        // console.log(prevClasses);
+        var classesToDelete = [];
+        prevClasses.forEach(class_ => {
+            // console.log(class_.date,class_.time);
+            const d = class_.date.substring(0, 10) + ' 00:' + class_.time;
+            const classTime = new Date(d);
+            // console.log(classTime);
+            if (classTime < new Date()) {
+                console.log(d);
+                classesToDelete.push(class_);
+            }
+        });
+        if(classesToDelete.length != 0){
+            await db.collection(type).doc(id).update({
+                upcomingClasses: FieldValue.arrayRemove(...classesToDelete)
+            })
+        }
+        res.send('Deleted')
+    } catch (err) {
+        console.log(err.message);
+        res.send(err.message);
+
+    }
 })
 
 const port = process.env.PORT || 3000;
