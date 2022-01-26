@@ -265,7 +265,7 @@ app.get('/updateUpcomingClassesList/:id', async (req, res) => {
                 classesToDelete.push(class_);
             }
         });
-        if(classesToDelete.length != 0){
+        if (classesToDelete.length != 0) {
             await db.collection(type).doc(id).update({
                 upcomingClasses: FieldValue.arrayRemove(...classesToDelete)
             })
@@ -276,6 +276,21 @@ app.get('/updateUpcomingClassesList/:id', async (req, res) => {
         res.send(err.message);
 
     }
+})
+
+app.put('/updateInfo/:id', async (req, res) => {
+    const { id } = req.params;
+
+    const { keyWord, fieldChanged, newValue } = req.body;
+    try {
+        await db.collection(keyWord).doc(id).update({
+            [fieldChanged]: newValue
+        })
+        res.send('Done');
+    } catch (err) {
+        res.send(err.message);
+    }
+
 })
 
 const port = process.env.PORT || 3000;
