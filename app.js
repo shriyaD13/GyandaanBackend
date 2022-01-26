@@ -278,7 +278,7 @@ app.get('/updateUpcomingClassesList/:id', async (req, res) => {
     }
 })
 
-app.put('/updateInfo/:id', async (req, res) => {
+app.post('/updateInfo/:id', async (req, res) => {
     const { id } = req.params;
 
     const { keyWord, fieldChanged, newValue } = req.body;
